@@ -1,0 +1,149 @@
+指定到设备端口文件
+cd /home/wheeltec/wheeltec_robot/src/turn_on_wheeltec_robot/scripts/
+
+挂载源代码
+sudo mount -t nfs 192.168.0.100:/home/wheeltec/wheeltec_robot /mnt
+
+=========================================
+Omnimod:全向移动模式
+
+启动初始化节点(wheeltec终端)：
+roslaunch turn_on_wheeltec_robot turn_on_wheeltec_robot.launch
+
+按键控制(wheeltec终端)：
+roslaunch wheeltec_robot_rc keyboard_teleop.launch
+=========================================
+
+1.查看ros的topic目录
+passoni@passoni:~$ rostopic list
+
+2.查看ros的某个topic的类型
+passoni@passoni:~$ rostopic info /odom
+
+3.查看某个topic话题的详细数据构成
+passoni@passoni:~$ rosmsg show nav_msgs/Odometry 
+
+4.查看小车电量
+rostopic echo /PowerVoltage
+5.查看小车速度
+rostopic echo /cmd_vel
+----------------------------------------------------------------------------
+工作过程讲解
+
+1.小海龟
+roscore
+rosrun turtlesim turtlesim_node
+rosrun turtlesim turtle_teleop_key
+
+2.查看节点话题
+rqt_graph
+!在ros系统中，键盘左右键和系统z的变化角度是反方向的！
+
+
+3.NFS挂载查看程序
+sudo mount -t nfs 192.168.0.100:/home/wheeltec/wheeltec_robot /mnt
+---------------------------------------------------------------------------
+
+开启小车运动 但不知道为什么会一直运动
+passoni@passoni:~$ rostopic pub /cmd_vel geometry_msgs/Twist 
+ ---------------------------------------------------------------------------
+启动激光建图
+roslaunch turn_on_wheeltec_robot mapping.launch 
+查看建图效果：rviz(passoni)
+可以使用键盘控制、APP遥控、PS2遥控、航模遥控进行控制小车运动。
+
+建图完成，保存地图
+  ①一键保存：roslaunch turn_on_wheeltec_robot map_saver.launch 
+  ②打开地图路径：cd /home/wheeltec/wheeltec_robot/src/turn_on_wheeltec_robot/map
+     保存地图：rosrun map_server map_saver -f 地图名
+
+注：地图文件可以使用PhotoShop进行编辑
+------------------------
+建图
+mapping.launch
+ 小车初始化节点：turn_on_wheeltec_robot.launch
+ 雷达节点：rplidar.launch
+ gmapping建图节点：algorithm_gmapping.launch
+查看TF树
+rosrun rqt_tf_tree rqt_tf_tree
+！里程计信息误差！由map和odom_combined的TF的差别来补偿
+！回环检测！检测从起点回到起点，没有的话可以会有地图重叠
+
+----------------------------------------------------------------------------------------------
+3.把小车放置在地图起点/rviz手动设置起点
+
+4.运行导航：
+roslaunch turn_on_wheeltec_robot navigation.launch
+
+5.运行rviz(passoni终端)：
+rviz
+
+6.使用rviz的2DNavGoal功能
+
+小车不运动同时没有路径规划显示：检查.bashrc文件ip地址()
+
+---------------------------
+额外补充和launch文件讲解
+
+1.地图文件
+
+2.手动发布目标点
+rostopic pub /move_base_simple/goal
+四元数
+x  = ax * sin(theta/2)    
+y  = ay * sin(theta/2)    
+z  = 1* sin(180°/2)  =1
+w = cos(180°/2)  =0
+
+3.navigation.launch
+
+--------------------------
+整体导航工作原理与参数配置讲解
+navigation_stack
+
+出现错误：Aborting because the robot appears to be oscillating over and over. Even after executing all recovery behaviors
+
+RLException: error loading <rosparam> tag: 
+	file does not exist [/home/wheeltec/wheeltec_robot/src/turn_on_wheeltec_robot/costmap_common_params/param_/teb_local_planner_params.yaml]
+XML is <rosparam command="load" file="$(find turn_on_wheeltec_robot)/costmap_common_params/param_$(arg car_mode)/teb_local_planner_params.yaml"/>
+The traceback for the exception was written to the log file
+______________________________________________________________________
+运行雷达跟随 :roslaunch simple_follower laser_follower.launch
+修改局部代价地图的参数 turn_on_wheeltec/para_common/local_costmap_param
+修改循迹小车的参数 turn_on_wheeltec/costmap_common_params/param_mini_mec
+----------------------------------------------------------------------------------------
+自主建图 详见自主建图功能教程
+//启动rrt_slam.launch文件：
+roslaunch turn_on_wheeltec_robot rrt_slam.launch
+
+修改小车壁障距离 0.15m
+
+指定编译编译单个功能包：
+catkin_make -DCATKIN_WHITELIST_PACKAGES="功能包名"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
